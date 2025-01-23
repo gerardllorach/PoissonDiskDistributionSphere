@@ -1,2 +1,2 @@
 # PoissonDiskDistributionSphere
-Poisson disk distribution on a sphere
+Poisson disk distribution on a sphere. https://gerardllorach.github.io/PoissonDiskDistributionSphere/
