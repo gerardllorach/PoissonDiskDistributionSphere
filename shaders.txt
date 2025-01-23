@@ -1,0 +1,120 @@
+// Point basic shader
+\point.vs
+	precision highp float;
+	attribute vec3 a_vertex;
+	attribute vec3 a_normal;
+	varying vec3 v_normal;
+	uniform float u_pointSize;
+	uniform mat4 u_mvp;
+	void main() {
+		v_normal = a_normal;
+		gl_Position = u_mvp  * vec4(a_vertex, 1.0);
+		gl_PointSize = u_pointSize;
+	}
+
+\point.fs
+	precision highp float;
+	varying vec3 v_normal;
+	uniform vec4 u_color;
+	void main() {
+	 	//gl_FragColor = u_color;
+	 	gl_FragColor = vec4 (v_normal, 1.0);
+	}
+
+
+
+
+// Earth shader
+\earth.vs
+	precision highp float;
+	attribute vec3 a_vertex;
+	attribute vec2 a_coord;
+	varying vec2 v_coord;
+	uniform mat4 u_mvp;
+	void main() {
+		v_coord = a_coord;
+		gl_Position = u_mvp * vec4(a_vertex,1.0);
+	}
+
+\earth.fs
+	precision highp float;
+	uniform sampler2D u_texture;
+	varying vec2 v_coord;
+	uniform vec4 u_color;
+	void main() {
+	 	gl_FragColor = texture2D(u_texture, v_coord) * u_color;
+	}
+
+
+
+
+// Wind paths shader
+\windPath.vs
+	precision highp float;
+	attribute vec3 a_vertex;
+	attribute vec3 a_normal;
+	varying vec3 v_normal;
+	varying float v_anim;
+	uniform float u_pointSize;
+	uniform mat4 u_mvp;
+	vec3 convertVertex(float radius, vec3 v)
+	{
+		float lat = v.x;
+		float lon = v.y;
+		float coslat = cos(lat);
+		float x = radius * coslat * cos(lon);
+		float y = radius * sin(lat);
+		float z = radius * coslat * sin(lon);
+		return vec3( x, y, z );
+	}
+
+	void main() {
+		v_normal = a_normal;
+		vec3 pos = convertVertex(1.000, a_vertex );
+		v_anim = a_vertex.z;
+		gl_Position = u_mvp * vec4(pos,1.0);
+		//gl_PointSize = u_pointSize * v_normal.y;
+	}
+
+\windPath.fs
+	precision highp float;
+	varying vec3 v_normal;
+	varying float v_anim;
+	uniform float u_it;
+	//uniform sampler2D u_texture;
+	void main() {
+
+		float sizeIt = 800.0;
+
+		float it = mod(u_it, sizeIt);
+		float it2 = mod(u_it + sizeIt * 0.33, sizeIt);
+		float it3 = mod(u_it + sizeIt * 0.66, sizeIt);
+
+		float alpha;
+		float alpha2;
+		float alpha3;
+		
+		if (it < v_anim)
+			alpha = 0.0;
+		else
+			alpha = max (1.0 - (it-v_anim)/(200.0), 0.0);
+
+		if (it2 < v_anim)
+			alpha2 = 0.0;
+		else
+			alpha2 = max (1.0 - (it2-v_anim)/(200.0), 0.0);
+
+		if (it3 < v_anim)
+			alpha3 = 0.0;
+		else
+			alpha3 = max (1.0 - (it3-v_anim)/(200.0), 0.0);
+
+		alpha += alpha2 + alpha3;
+
+
+		//vec3 factors = texture2D(u_texture, vec2(v_normal.z, 0.5)).xyz;
+		
+		float alphaColor = v_normal.y + v_normal.z == 0.0 ? v_normal.x : 1.0;
+
+	 	gl_FragColor = vec4 (v_normal, alphaColor * alpha);
+	}
